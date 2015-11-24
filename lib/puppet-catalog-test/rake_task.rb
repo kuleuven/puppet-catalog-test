@@ -14,6 +14,7 @@ module PuppetCatalogTest
     attr_accessor :facts
     attr_accessor :reporter
     attr_accessor :verbose
+    attr_accessor :parser
 
     def initialize(name, &task_block)
       desc "Compile all puppet catalogs" unless ::Rake.application.last_comment
@@ -29,7 +30,8 @@ module PuppetCatalogTest
         :manifest_path => @manifest_path,
         :module_paths => @module_paths,
         :config_dir => @config_dir,
-        :verbose => @verbose
+        :verbose => @verbose,
+        :parser => @parser
       }
 
       if @config_dir
