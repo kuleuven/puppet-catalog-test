@@ -15,6 +15,7 @@ module PuppetCatalogTest
     attr_accessor :reporter
     attr_accessor :scenario_yaml
     attr_accessor :verbose
+    attr_accessor :parser
 
     def initialize(name, &task_block)
       desc "Compile all puppet catalogs" unless ::Rake.application.last_description

@@ -8,6 +8,7 @@ module PuppetCatalogTest
       config_dir = config[:config_dir]
       hiera_config = config[:hiera_config]
       verbose = config[:verbose]
+      parser = config[:parser]
 
       raise ArgumentError, "[ERROR] manifest_path must be specified" if !manifest_path
       raise ArgumentError, "[ERROR] manifest_path (#{manifest_path}) does not exist" if !FileTest.exist?(manifest_path)
@@ -24,6 +25,10 @@ module PuppetCatalogTest
       if verbose
         Puppet::Util::Log.newdestination(:console)
         Puppet::Util::Log.level = :debug
+      end
+
+      if parser == 'future'
+        Puppet.settings.handlearg("--parser", "future")
       end
 
       Puppet.settings.handlearg("--config", ".")
@@ -43,7 +48,5 @@ module PuppetCatalogTest
     def compile(node); end
     def create_node(hostname, facts); end
     def version; end
-    def prepare; end
-    def cleanup; end
   end
 end
