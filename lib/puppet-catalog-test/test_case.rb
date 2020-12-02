@@ -1,4 +1,5 @@
+# frozen_string_literal: true
+
 module PuppetCatalogTest
-  class TestCase < Struct.new(:name, :facts, :passed, :error, :duration)
-  end
+  TestCase = Struct.new(:name, :facts, :passed, :error, :duration)
 end

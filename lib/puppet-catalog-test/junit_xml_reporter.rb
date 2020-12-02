@@ -1,35 +1,35 @@
-require "builder"
+# frozen_string_literal: true
 
-module PuppetCatalogTest
-  class JunitXmlReporter < PuppetCatalogTest::StdoutReporter
-    def initialize(project_name, report_file)
-      @project_name = project_name
-      @report_file = report_file
+require 'builder'
 
-      target_dir = File.dirname(report_file)
+class PuppetCatalogTest::JunitXmlReporter < PuppetCatalogTest::StdoutReporter
+  # rubocop:disable Lint/MissingSuper
+  def initialize(project_name, report_file)
+    @project_name = project_name
+    @report_file = report_file
 
-      FileUtils.mkdir_p(target_dir)
+    target_dir = File.dirname(report_file)
 
-      @out = $stdout
-    end
+    FileUtils.mkdir_p(target_dir)
 
-    def summarize(tr)
-      failed_nodes = tr.test_cases.select { |tc| tc.passed == false }
-      builder = Builder::XmlMarkup.new
+    @out = $stdout
+  end
+  # rubocop:enable Lint/MissingSuper
 
-      xml = builder.testsuite(:failures => failed_nodes.size, :tests => tr.test_cases.size) do |ts|
-        tr.test_cases.each do |tc|
-          ts.testcase(:classname => @project_name, :name => tc.name, :time => tc.duration) do |tc_node|
-            if tc.error
-              tc_node.failure tc.error
-            end
-          end
+  def summarize(test_run)
+    failed_nodes = test_run.test_cases.select { |tc| tc.passed == false }
+    builder = Builder::XmlMarkup.new
+
+    xml = builder.testsuite(failures: failed_nodes.size, tests: test_run.test_cases.size) do |ts|
+      test_run.test_cases.each do |tc|
+        ts.testcase(classname: @project_name, name: tc.name, time: tc.duration) do |tc_node|
+          tc_node.failure tc.error if tc.error
         end
       end
+    end
 
-      File.open(@report_file, "w") do |fp|
-        fp.puts xml
-      end
+    File.open(@report_file, 'w') do |fp|
+      fp.puts xml
     end
   end
 end

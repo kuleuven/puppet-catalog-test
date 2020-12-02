@@ -1,15 +1,19 @@
-$:.unshift(File.join(File.dirname(__FILE__), "..", "lib"))
+# frozen_string_literal: true
 
-require "test/unit"
-require "mocha/setup"
+$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 
-require "puppet-catalog-test"
+require 'test/unit'
+require 'mocha/setup'
 
-CASE_DIR = File.join(File.dirname(__FILE__), "cases")
+require 'puppet-catalog-test'
+
+CASE_DIR = File.join(File.dirname(__FILE__), 'cases')
 
 class PuppetCatalogTestCase < Test::Unit::TestCase
   def setup
-    Puppet.settings.instance_eval("clear_everything_for_tests")
+    # rubocop:disable Style/EvalWithLocation
+    Puppet.settings.instance_eval('clear_everything_for_tests')
+    # rubocop:enable Style/EvalWithLocation
   end
 
   def default_test
@@ -20,10 +24,10 @@ class PuppetCatalogTestCase < Test::Unit::TestCase
     out_buffer = StringIO.new
 
     puppet_config = {
-      :manifest_path => File.join(base_dir, "site.pp"),
-      :module_paths => [File.join(base_dir, "modules")],
-      :config_dir => base_dir,
-      :hiera_config => hiera_config(base_dir)
+      manifest_path: File.join(base_dir, 'site.pp'),
+      module_paths: [File.join(base_dir, 'modules')],
+      config_dir: base_dir,
+      hiera_config: hiera_config(base_dir),
     }
 
     pct = PuppetCatalogTest::TestRunner.new(puppet_config, out_buffer)
@@ -34,18 +38,20 @@ class PuppetCatalogTestCase < Test::Unit::TestCase
   end
 
   def hiera_config(base_dir)
-    hiera_path = File.join(File.dirname(File.expand_path(__FILE__)), "..", base_dir)
-    hiera_yml = File.join(hiera_path, "hiera.yaml")
+    hiera_path = File.join(File.dirname(File.expand_path(__FILE__)), '..', base_dir)
+    hiera_yml = File.join(hiera_path, 'hiera.yaml')
 
     return hiera_yml if FileTest.exists?(hiera_yml)
+
     nil
   end
 
+  # rubocop:disable Style/OptionalBooleanParameter
   def build_test_runner_for_all_nodes(base_dir, empty_facts = false, filter = PuppetCatalogTest::Filter.new)
     pct = build_test_runner(base_dir)
 
     if empty_facts
-      pct.load_all(filter, {"fqdn" => nil})
+      pct.load_all(filter, { 'fqdn' => nil })
     else
       pct.load_all(filter)
     end
@@ -54,4 +60,5 @@ class PuppetCatalogTestCase < Test::Unit::TestCase
 
     pct
   end
+  # rubocop:enable Style/OptionalBooleanParameter
 end

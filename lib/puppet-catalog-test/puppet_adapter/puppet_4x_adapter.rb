@@ -1,48 +1,46 @@
-require "puppet"
+# frozen_string_literal: true
 
-module PuppetCatalogTest
-  class Puppet4xAdapter < BasePuppetAdapter
-    def initialize(config)
-      super(config)
+require 'puppet'
 
-      @env = Puppet.lookup(:current_environment).
-        override_with(:manifest => config[:manifest_path]).
-        override_with(:modulepath => config[:module_paths])
+class PuppetCatalogTest::Puppet4xAdapter < PuppetCatalogTest::BasePuppetAdapter
+  def initialize(config)
+    super(config)
 
-      @env.each_plugin_directory do |dir|
-        $LOAD_PATH << dir unless $LOAD_PATH.include?(dir)
-      end
+    @env = Puppet.lookup(:current_environment)
+                 .override_with(manifest: config[:manifest_path])
+                 .override_with(modulepath: config[:module_paths])
 
-      require 'puppet/test/test_helper'
-
-      Puppet::Test::TestHelper.initialize
-      Puppet::Test::TestHelper.before_all_tests
+    @env.each_plugin_directory do |dir|
+      $LOAD_PATH << dir unless $LOAD_PATH.include?(dir)
     end
 
-    def version
-      Puppet.version
-    end
+    require 'puppet/test/test_helper'
 
-    def nodes
-      @env.known_resource_types.nodes.keys
-    end
+    Puppet::Test::TestHelper.initialize
+    Puppet::Test::TestHelper.before_all_tests
+  end
 
-    def create_node(hostname, facts)
-      Puppet::Test::TestHelper.before_each_test
-      init_config
-      node = Puppet::Node.new(hostname, :facts => Puppet::Node::Facts.new("facts", facts))
-      node.merge(facts)
-      node
-    end
+  def version
+    Puppet.version
+  end
 
-    def compile(node)
-      begin
-        Puppet::Parser::Compiler.compile(node)
-      rescue => e
-        raise e
-      ensure
-        Puppet::Test::TestHelper.after_each_test
-      end
-    end
+  def nodes
+    @env.known_resource_types.nodes.keys
+  end
+
+  def create_node(hostname, facts)
+    Puppet::Test::TestHelper.before_each_test
+    init_config
+    node = Puppet::Node.new(hostname, facts: Puppet::Node::Facts.new('facts', facts))
+    node.merge(facts)
+    node
+  end
+
+  def compile(node)
+    Puppet::Parser::Compiler.compile(node)
+  rescue StandardError => e
+    raise e
+  ensure
+    Puppet::Test::TestHelper.after_each_test
   end
 end

@@ -1,13 +1,13 @@
-require "yaml"
-require "digest/md5"
-require "thread"
-require "etc"
+# frozen_string_literal: true
+
+require 'yaml'
+require 'digest/md5'
+require 'etc'
 
 task :images do
+  existing_images = %x(docker images).split("\n").select { |l| l =~ /^ruby-/ }.map { |l| l.match(/^(\S+)\s*/)[1] }.compact
 
-  existing_images = `docker images`.split("\n").select { |l| l =~ /^ruby-/ }.map { |l| l.match(/^(\S+)\s*/)[1] }.compact
-
-  YAML.load_file("../.travis.yml")["rvm"].each do |ruby_version|
+  YAML.load_file('../.travis.yml')['rvm'].each do |ruby_version|
     name = "ruby-env-#{ruby_version}"
     if existing_images.include?(name)
       puts "=> skipping #{name} as it already exists"
@@ -18,20 +18,21 @@ task :images do
 end
 
 task :artifact do
-  sh "rm -rf share && mkdir -p share"
-  sh "tar czf share/project.tar.gz -C .. Gemfile Rakefile lib test puppet-catalog-test.gemspec"
-  sh "cp build-project.sh share/build.sh"
-  sh "chmod a+rx share/build.sh"
+  sh 'rm -rf share && mkdir -p share'
+  sh 'tar czf share/project.tar.gz -C .. Gemfile Rakefile lib test puppet-catalog-test.gemspec'
+  sh 'cp build-project.sh share/build.sh'
+  sh 'chmod a+rx share/build.sh'
 end
 
-task :test, [:filter_ruby, :filter_puppet] => [:artifact] do |_, args|
-  config = YAML.load_file("../.travis.yml")
-  excludes = config["matrix"]["exclude"]
+task :test, %i[filter_ruby filter_puppet] => [:artifact] do |_, args|
+  config = YAML.load_file('../.travis.yml')
+  excludes = config['matrix']['exclude']
   builds = []
 
-  config["rvm"].each do |ruby_version|
-    config["env"].each do |env_vars|
-      next if excludes.detect { |e| e["rvm"] == ruby_version && e["env"] == env_vars }
+  config['rvm'].each do |ruby_version|
+    config['env'].each do |env_vars|
+      next if excludes.detect { |e| e['rvm'] == ruby_version && e['env'] == env_vars }
+
       t = env_vars.match(/^PUPPET_VERSION=(\S+)$/)[1]
 
       next if args[:filter_ruby] && ruby_version !~ /^#{args[:filter_ruby]}/
@@ -41,21 +42,21 @@ task :test, [:filter_ruby, :filter_puppet] => [:artifact] do |_, args|
       cache_dir = "cache/#{name}"
 
       mkdir_p cache_dir
-      
+
       cmd = [
-        "docker run",
-        "-it",
-        "--rm",
+        'docker run',
+        '-it',
+        '--rm',
         "-e #{env_vars}",
         "-e RUBY_TARGET_VERSION=#{ruby_version}",
         "-v #{Dir.pwd}/share:/share",
         "-v #{Dir.pwd}/#{cache_dir}:/cache",
         "--name #{name}",
         "ruby-env-#{ruby_version}",
-        "/share/build.sh"
-      ].join(" ")
-      
-      builds << {:cmd => cmd, :label => name}
+        '/share/build.sh',
+      ].join(' ')
+
+      builds << { cmd: cmd, label: name }
     end
   end
 
@@ -63,17 +64,15 @@ task :test, [:filter_ruby, :filter_puppet] => [:artifact] do |_, args|
   pq = Queue.new
   results = []
 
-  builds = builds
-
-  Thread.start do 
+  Thread.start do
     loop do
-       puts pq.pop
+      puts pq.pop
     end
-  end 
+  end
 
   report_thread = Thread.new do
     wait_for_new = true
-    while wait_for_new do
+    while wait_for_new
       build = q.pop
       results << build
 
@@ -82,7 +81,7 @@ task :test, [:filter_ruby, :filter_puppet] => [:artifact] do |_, args|
         m = l.match(/^EXIT_STATUS=(\d+)/)
         exit_status = m[1] if m
       end
-      
+
       puts "\r[#{results.size}/#{builds.size}] #{build[:label]} #{Time.now - build[:started_at]}s status=#{exit_status}"
 
       if results.size == builds.size
@@ -91,8 +90,8 @@ task :test, [:filter_ruby, :filter_puppet] => [:artifact] do |_, args|
       end
     end
   end
-  
-  while !builds.empty? do
+
+  until builds.empty?
     todo = builds.pop(Etc.nprocessors)
     threads = []
     todo.each do |build|
@@ -104,26 +103,25 @@ task :test, [:filter_ruby, :filter_puppet] => [:artifact] do |_, args|
         q.push build
       end
     end
-    threads.each { |t| t.join }
+    threads.each(&:join)
   end
 
   report_thread.join
 end
 
 task :killall do
-  `docker ps`.split("\n").each do |l|
+  %x(docker ps).split("\n").each do |l|
     next if l =~ /^CONTAINER /
 
     m = l.match(/^([a-z0-9]{12})\s*(\S+)\s*/)
-    next if !m
-    if m[2] =~ /^ruby-env-/
-      sh "docker kill #{m[1]}"
-    end
+    next unless m
+
+    sh "docker kill #{m[1]}" if m[2] =~ /^ruby-env-/
   end
 end
 
 task :clean do
-  `docker ps -a`.split("\n").each do |l|
+  %x(docker ps -a).split("\n").each do |l|
     next if l =~ /^CONTAINER /
 
     m = l.match(/^([a-z0-9]{12})\s*(\S+)\s*/)
@@ -133,7 +131,7 @@ end
 
 task :foo do
   p 1
-  File.readlines("logs/test-ruby-1.9.3__puppet-4.1.0.log").each do |l|
+  File.readlines('logs/test-ruby-1.9.3__puppet-4.1.0.log').each do |l|
     m = l.match(/^EXIT_STATUS=(\d+)$/)
     p m if m
   end

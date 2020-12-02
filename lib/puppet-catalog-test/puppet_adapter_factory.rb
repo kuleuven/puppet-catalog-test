@@ -1,23 +1,17 @@
-require "puppet/version"
-require "puppet-catalog-test/puppet_adapter/base_puppet_adapter"
+# frozen_string_literal: true
 
-require "puppet-catalog-test/puppet_adapter/puppet_3x_adapter"
-require "puppet-catalog-test/puppet_adapter/puppet_4x_adapter"
+require 'puppet/version'
+require 'puppet-catalog-test/puppet_adapter/base_puppet_adapter'
 
-module PuppetCatalogTest
-  class PuppetAdapterFactory
-    def self.create_adapter(config)
-      if Puppet.version.start_with?("3.")
-        return Puppet3xAdapter.new(config)
-      elsif Puppet.version =~ /^(4|5)/
-        return Puppet4xAdapter.new(config)
-      elsif Puppet.version.start_with?("5.")
-        return Puppet4xAdapter.new(config)
-      elsif Puppet.version.start_with?("6.")
-        return Puppet4xAdapter.new(config)
-      end
+require 'puppet-catalog-test/puppet_adapter/puppet_3x_adapter'
+require 'puppet-catalog-test/puppet_adapter/puppet_4x_adapter'
 
-      raise RuntimeException, "Unsupported Puppet version detected (#{Puppet.version})"
-    end
+class PuppetCatalogTest::PuppetAdapterFactory
+  def self.create_adapter(config)
+    return PuppetCatalogTest::Puppet3xAdapter.new(config) if Puppet.version.start_with?('3.')
+
+    return PuppetCatalogTest::Puppet4xAdapter.new(config) if Puppet.version =~ /^(4|5|6)/
+
+    raise RuntimeException, "Unsupported Puppet version detected (#{Puppet.version})"
   end
 end

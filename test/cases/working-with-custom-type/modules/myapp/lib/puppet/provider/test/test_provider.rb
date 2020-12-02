@@ -1,3 +1,4 @@
+# frozen_string_literal: true
+
 require 'puppet/provider/will_be_required'
-  Puppet::Type.type(:test).provide(:test_provider) do
-end
+Puppet::Type.type(:test).provide(:test_provider)
