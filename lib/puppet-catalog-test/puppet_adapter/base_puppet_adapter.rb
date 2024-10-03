@@ -41,6 +41,8 @@ class PuppetCatalogTest::BasePuppetAdapter
     Puppet.settings.handlearg('--modulepath', module_path)
     Puppet.settings.handlearg('--vardir', Dir.mktmpdir)
     Puppet.settings.handlearg('--environment', environment)
+    Puppet.settings[:strict] = :warning
+    Puppet.settings[:strict_variables] = false
 
     if hiera_config
       raise ArgumentError, "[ERROR] hiera_config  (#{hiera_config}) does not exist" unless FileTest.exist?(hiera_config)
